@@ -12,6 +12,9 @@ failure.
 
 When fetching large amounts of data try to use get_many() or dict_range().
 
+# Links
+  * https://pypi.org/project/keyvalue-sqlite/1.0.0/
+  * https://github.com/zackees/keyvalue_sqlite
 
 # TODO:
   * Make read access use a shared lock rather than an exclusive lock.
