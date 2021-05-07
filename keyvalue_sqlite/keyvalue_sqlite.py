@@ -9,7 +9,7 @@ import json
 import os
 import sqlite3
 from contextlib import contextmanager
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 
 def to_path(sql_uri: str) -> str:
@@ -280,6 +280,23 @@ class KeyValueSqlite:
         for key, val in output:
             out_dict[key] = json_decode(val)
         return out_dict
+
+    def get_range(self, key_low: str, key_high: str) -> List[Tuple[str, Any]]:  # type: ignore
+        """Outputs an ordered sequence starting form key_low to key_high."""
+        output: List[str, Any]  # type: ignore
+        output = []  # type: ignore
+        select_stmt = (
+            f"SELECT key, value FROM {self.table_name} WHERE key BETWEEN ? AND ?"
+        )
+        values = (key_low, key_high)
+        with self.open_db_for_read() as conn:
+            conn.execute("BEGIN")
+            cursor = conn.execute(select_stmt, values)
+            for row in cursor:
+                output.append(row[0:2])
+        for i, item in enumerate(output):
+            output[i] = (item[0], json_decode(item[1]))
+        return output
 
     def remove(self, key: str, ignore_missing_key=False) -> None:  # type: ignore
         """Removes they key, if it exists."""
