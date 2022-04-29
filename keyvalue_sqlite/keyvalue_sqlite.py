@@ -4,12 +4,16 @@
     value which can be encoded to json via the json.dumps(value) command.
 """
 
+# pylint: disable=consider-using-f-string
 
 import json
 import os
 import sqlite3
 from contextlib import contextmanager
 from typing import Any, Dict, List, Optional, Set, Tuple
+
+
+TIMEOUT_OPEN = 60  # Try and fix some of the breakages of sqlite3.
 
 
 def to_path(sql_uri: str) -> str:
@@ -48,7 +52,7 @@ class KeyValueSqlite:
         folder_path = os.path.dirname(self.db_path)
         os.makedirs(folder_path, exist_ok=True)
         self.table_name = table_name.replace("-", "_")
-        if self.db_path == "" or self.db_path == ":memory:":
+        if self.db_path in ["", ":memory:"]:
             raise ValueError("Can not use in memory database for keyvalue_db")
         self.create_table()
 
@@ -79,7 +83,10 @@ class KeyValueSqlite:
         """Obtains an exclusive lock and does a write."""
         try:
             conn = sqlite3.connect(
-                self.db_path, isolation_level="EXCLUSIVE", check_same_thread=False
+                self.db_path,
+                isolation_level="EXCLUSIVE",
+                check_same_thread=False,
+                timeout=TIMEOUT_OPEN,
             )
         except sqlite3.OperationalError as err:
             raise OSError(f"Error while opening {self.db_path}") from err
@@ -99,7 +106,10 @@ class KeyValueSqlite:
         """
         try:
             conn = sqlite3.connect(
-                self.db_path, isolation_level="EXCLUSIVE", check_same_thread=False
+                self.db_path,
+                isolation_level="EXCLUSIVE",
+                check_same_thread=False,
+                timeout=60,
             )
         except sqlite3.OperationalError as err:
             raise OSError(f"Error while opening {self.db_path}") from err
