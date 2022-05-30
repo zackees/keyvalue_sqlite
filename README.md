@@ -6,7 +6,7 @@ it's key-value to an sqlite database.
 # API
 
 ```
-from keyvalue_sqlite.keyvalue_sqlite import KeyValueSqlite
+from keyvalue_sqlite import KeyValueSqlite
 
 DB_PATH = '/path/to/db.sqlite'
 
