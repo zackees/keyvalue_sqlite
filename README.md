@@ -7,7 +7,10 @@ it's key-value to an sqlite database.
 
 ```
 from keyvalue_sqlite.keyvalue_sqlite import KeyValueSqlite
-db = KeyValueSqlite(db_path, 'table-name')
+
+DB_PATH = '/path/to/db.sqlite'
+
+db = KeyValueSqlite(DB_PATH, 'table-name')
 # Now use standard dictionary operators
 db.set_default('0', '1')
 actual_value = db.get('0')
