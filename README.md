@@ -13,7 +13,7 @@ failure.
 When fetching large amounts of data try to use get_many() or dict_range().
 
 # Links
-  * https://pypi.org/project/keyvalue-sqlite/1.0.0/
+  * https://pypi.org/project/keyvalue-sqlite
   * https://github.com/zackees/keyvalue_sqlite
 
 # TODO:
