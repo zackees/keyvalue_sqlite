@@ -6,12 +6,19 @@ __pycache__/
 # C extensions
 *.so
 
+app/temp/*
+
+activate.sh
+
 # Distribution / packaging
 .Python
+prod_env/
+prod_env/*
+data/
 build/
 develop-eggs/
 dist/
-downloads/
+
 eggs/
 .eggs/
 lib/
@@ -50,6 +57,8 @@ coverage.xml
 *.py,cover
 .hypothesis/
 .pytest_cache/
+
+*/node_modules/*
 
 # Translations
 *.mo
@@ -127,3 +136,13 @@ dmypy.json
 
 # Pyre type checker
 .pyre/
+
+
+# Mac specific ignores
+.DS_Store
+.Spotlight-V100
+.Trashes
+Thumbs.db
+
+# Local Netlify folder
+.netlify

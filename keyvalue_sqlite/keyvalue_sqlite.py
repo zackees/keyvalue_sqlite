@@ -10,8 +10,7 @@ import json
 import os
 import sqlite3
 from contextlib import contextmanager
-from typing import Any, Dict, List, Optional, Set, Tuple
-
+from typing import Any, Dict, Generator, List, Optional, Set, Tuple
 
 TIMEOUT_OPEN = 60  # Try and fix some of the breakages of sqlite3.
 
@@ -79,14 +78,17 @@ class KeyValueSqlite:
                 pass  # Table already created
 
     @contextmanager
-    def open_db_for_write(self):
+    def open_db_for_write(
+        self, isolation_level: Optional[str] = None, timeout: int = TIMEOUT_OPEN
+    ) -> Generator[sqlite3.Connection, None, None]:
         """Obtains an exclusive lock and does a write."""
+        isolation_level = isolation_level or "EXCLUSIVE"
         try:
             conn = sqlite3.connect(
                 self.db_path,
-                isolation_level="EXCLUSIVE",
+                isolation_level=isolation_level,
                 check_same_thread=False,
-                timeout=TIMEOUT_OPEN,
+                timeout=timeout,
             )
         except sqlite3.OperationalError as err:
             raise OSError(f"Error while opening {self.db_path}") from err
@@ -99,7 +101,7 @@ class KeyValueSqlite:
             conn.close()
 
     @contextmanager
-    def open_db_for_read(self):  # type: ignore
+    def open_db_for_read(self) -> Generator[sqlite3.Connection, None, None]:
         """
         Obtains an exclusive lock and reads. TODO: This should be a shared lock for
         concurrent read access.
@@ -107,7 +109,6 @@ class KeyValueSqlite:
         try:
             conn = sqlite3.connect(
                 self.db_path,
-                isolation_level="EXCLUSIVE",
                 check_same_thread=False,
                 timeout=60,
             )
@@ -369,4 +370,19 @@ class KeyValueSqlite:
         with self.open_db_for_write() as conn:
             conn.execute("BEGIN")
             conn.executemany(insert_stmt, records)
+            conn.commit()
+
+    def atomic_add(self, key: str, value: int) -> None:
+        """
+        Adds value to the value associated with key.
+        """
+        check_key(key)
+        update_stmt = f"UPDATE {self.table_name} SET value = value + ? WHERE key = ?"
+        insert_stmt = "INSERT INTO %s (key, value) VALUES (?, ?)" % self.table_name
+        values = (value, key)
+        with self.open_db_for_write(isolation_level="EXCLUSIVE") as conn:
+            conn.execute("BEGIN")
+            cursor = conn.execute(update_stmt, values)
+            if cursor.rowcount == 0:
+                conn.execute(insert_stmt, (key, value))
             conn.commit()
