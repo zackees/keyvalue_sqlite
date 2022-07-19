@@ -48,4 +48,5 @@ When fetching large amounts of data try to use get_many() or dict_range().
   * https://github.com/zackees/keyvalue_sqlite
 
 # Versions
+  * 1.0.5: Makes table name optional.
   * 1.0.4: Adds atomic_add to allow atomic int operations.
