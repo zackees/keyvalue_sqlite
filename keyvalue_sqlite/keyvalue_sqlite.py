@@ -46,9 +46,12 @@ class KeyValueSqlite:
     database file.
     """
 
-    def __init__(self, db_path: str, table_name: Optional[str] = None) -> None:
+    def __init__(
+        self, db_path: str, table_name: Optional[str] = None, timeout: int = TIMEOUT_OPEN
+    ) -> None:
         """Initialize the database."""
         table_name = table_name or "default"
+        self.timeout = timeout
         self.db_path = to_path(db_path)
         folder_path = os.path.dirname(self.db_path)
         os.makedirs(folder_path, exist_ok=True)
@@ -59,7 +62,7 @@ class KeyValueSqlite:
 
     def create_table(self) -> None:
         """Creates the table if it doesn't already exist."""
-        with self.open_db_for_read() as conn:
+        with self._open_db_for_read() as conn:
             # Check to see if it's exists first of all.
             check_table_stmt = (
                 "SELECT name FROM sqlite_master WHERE type='table' AND name='%s';" % self.table_name
@@ -71,15 +74,15 @@ class KeyValueSqlite:
         create_stmt = (
             "CREATE TABLE %s (key TEXT PRIMARY KEY UNIQUE NOT NULL, value TEXT);" % self.table_name
         )
-        with self.open_db_for_write() as conn:
+        with self._open_db_for_write() as conn:
             try:
                 conn.executescript(create_stmt)
             except sqlite3.ProgrammingError:
                 pass  # Table already created
 
     @contextmanager
-    def open_db_for_write(
-        self, isolation_level: Optional[str] = None, timeout: int = TIMEOUT_OPEN
+    def _open_db_for_write(
+        self, isolation_level: Optional[str] = None
     ) -> Generator[sqlite3.Connection, None, None]:
         """Obtains an exclusive lock and does a write."""
         isolation_level = isolation_level or "EXCLUSIVE"
@@ -88,7 +91,7 @@ class KeyValueSqlite:
                 self.db_path,
                 isolation_level=isolation_level,
                 check_same_thread=False,
-                timeout=timeout,
+                timeout=self.timeout,
             )
         except sqlite3.OperationalError as err:
             raise OSError(f"Error while opening {self.db_path}") from err
@@ -101,7 +104,7 @@ class KeyValueSqlite:
             conn.close()
 
     @contextmanager
-    def open_db_for_read(self) -> Generator[sqlite3.Connection, None, None]:
+    def _open_db_for_read(self) -> Generator[sqlite3.Connection, None, None]:
         """
         Obtains an exclusive lock and reads. TODO: This should be a shared lock for
         concurrent read access.
@@ -110,7 +113,7 @@ class KeyValueSqlite:
             conn = sqlite3.connect(
                 self.db_path,
                 check_same_thread=False,
-                timeout=60,
+                timeout=self.timeout,
             )
         except sqlite3.OperationalError as err:
             raise OSError(f"Error while opening {self.db_path}") from err
@@ -128,7 +131,7 @@ class KeyValueSqlite:
         val = json_encode(val)
         insert_stmt = "INSERT OR IGNORE INTO %s (key, value) VALUES (?, ?)" % self.table_name
         record = (key, val)
-        with self.open_db_for_write() as conn:
+        with self._open_db_for_write() as conn:
             conn.execute("BEGIN")
             conn.execute(insert_stmt, record)
             conn.commit()
@@ -183,7 +186,7 @@ class KeyValueSqlite:
         val = json_encode(val)
         insert_stmt = "INSERT OR REPLACE INTO %s (key, value) VALUES (?, ?)" % self.table_name
         record = (key, val)
-        with self.open_db_for_write() as conn:
+        with self._open_db_for_write() as conn:
             conn.execute("BEGIN")
             conn.execute(insert_stmt, record)
             conn.commit()
@@ -193,7 +196,7 @@ class KeyValueSqlite:
         check_key(key)
         select_stmt = "SELECT value FROM %s WHERE (key = ?)" % self.table_name
         values = (key,)
-        with self.open_db_for_read() as conn:
+        with self._open_db_for_read() as conn:
             conn.execute("BEGIN")
             cursor = conn.execute(select_stmt, values)
             for row in cursor:
@@ -205,7 +208,7 @@ class KeyValueSqlite:
         check_key(key)
         select_stmt = "SELECT value FROM %s WHERE (key = ?)" % self.table_name
         values = (key,)
-        with self.open_db_for_read() as conn:
+        with self._open_db_for_read() as conn:
             conn.execute("BEGIN")
             cursor = conn.execute(select_stmt, values)
             for row in cursor:
@@ -217,7 +220,7 @@ class KeyValueSqlite:
         check_key(key)
         select_stmt = "SELECT value FROM %s WHERE (key = ?)" % self.table_name
         values = (key,)
-        with self.open_db_for_read() as conn:
+        with self._open_db_for_read() as conn:
             conn.execute("BEGIN")
             cursor = conn.execute(select_stmt, values)
             for _ in cursor:
@@ -228,7 +231,7 @@ class KeyValueSqlite:
         """Returns a list of keys."""
         select_stmt = "SELECT key FROM %s" % self.table_name
         output = []
-        with self.open_db_for_read() as conn:
+        with self._open_db_for_read() as conn:
             conn.execute("BEGIN")
             cursor = conn.execute(select_stmt, ())
             for row in cursor:
@@ -242,7 +245,7 @@ class KeyValueSqlite:
         select_stmt = "SELECT key FROM %s WHERE key BETWEEN ? AND ?" % (self.table_name)
         output = []
         values = (key_low, key_high)
-        with self.open_db_for_read() as conn:
+        with self._open_db_for_read() as conn:
             conn.execute("BEGIN")
             cursor = conn.execute(select_stmt, values)
             for row in cursor:
@@ -256,7 +259,7 @@ class KeyValueSqlite:
         """
         select_stmt = "SELECT value FROM %s WHERE (key = ?)" % self.table_name
         output = {}
-        with self.open_db_for_read() as conn:
+        with self._open_db_for_read() as conn:
             conn.execute("BEGIN")
             for key in a_set:
                 cursor = conn.execute(select_stmt, (key,))
@@ -274,7 +277,7 @@ class KeyValueSqlite:
         check_key(key_high)
         select_stmt = "SELECT key, value FROM %s WHERE key BETWEEN ? AND ?" % (self.table_name)
         output = []
-        with self.open_db_for_read() as conn:
+        with self._open_db_for_read() as conn:
             conn.execute("BEGIN")
             cursor = conn.execute(select_stmt, (key_low, key_high))
             for row in cursor:
@@ -292,7 +295,7 @@ class KeyValueSqlite:
         output = []  # type: ignore
         select_stmt = f"SELECT key, value FROM {self.table_name} WHERE key BETWEEN ? AND ?"
         values = (key_low, key_high)
-        with self.open_db_for_read() as conn:
+        with self._open_db_for_read() as conn:
             conn.execute("BEGIN")
             cursor = conn.execute(select_stmt, values)
             for row in cursor:
@@ -306,7 +309,7 @@ class KeyValueSqlite:
         check_key(key)
         delete_stmt = "DELETE FROM %s WHERE key=?" % self.table_name
         values = (key,)
-        with self.open_db_for_write() as conn:
+        with self._open_db_for_write() as conn:
             conn.execute("BEGIN")
             cursor = conn.execute(delete_stmt, values)
             conn.commit()
@@ -318,7 +321,7 @@ class KeyValueSqlite:
     def clear(self) -> None:
         """Removes everything from this database."""
         select_stmt = "DELETE FROM %s " % self.table_name
-        with self.open_db_for_write() as conn:
+        with self._open_db_for_write() as conn:
             conn.execute("BEGIN")
             _ = conn.execute(select_stmt)
             conn.commit()
@@ -329,7 +332,7 @@ class KeyValueSqlite:
             check_key(key)
         insert_stmt = "INSERT OR REPLACE INTO %s (key, value) VALUES (?, ?)" % self.table_name
         records = [(key, json_encode(val)) for key, val in a_dict.items()]
-        with self.open_db_for_write() as conn:
+        with self._open_db_for_write() as conn:
             conn.execute("BEGIN")
             conn.executemany(insert_stmt, records)
             conn.commit()
@@ -338,7 +341,7 @@ class KeyValueSqlite:
         """Returns the whole database as a dictonary of key->value."""
         out = {}
         select_stmt = "SELECT * FROM %s" % self.table_name
-        with self.open_db_for_read() as conn:
+        with self._open_db_for_read() as conn:
             conn.execute("BEGIN")
             cursor = conn.execute(select_stmt)
             for row in cursor:
@@ -355,7 +358,7 @@ class KeyValueSqlite:
         insert_stmt = "INSERT OR IGNORE INTO %s (key, value) VALUES (?, ?)" % self.table_name
         data = a_dict.items()
         records = [(key, json_encode(val)) for key, val in data]
-        with self.open_db_for_write() as conn:
+        with self._open_db_for_write() as conn:
             conn.execute("BEGIN")
             conn.executemany(insert_stmt, records)
             conn.commit()
@@ -368,7 +371,7 @@ class KeyValueSqlite:
         update_stmt = f"UPDATE {self.table_name} SET value = value + ? WHERE key = ?"
         insert_stmt = "INSERT INTO %s (key, value) VALUES (?, ?)" % self.table_name
         values = (value, key)
-        with self.open_db_for_write(isolation_level="EXCLUSIVE") as conn:
+        with self._open_db_for_write(isolation_level="EXCLUSIVE") as conn:
             conn.execute("BEGIN")
             cursor = conn.execute(update_stmt, values)
             if cursor.rowcount == 0:
