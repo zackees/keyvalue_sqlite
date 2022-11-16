@@ -5,7 +5,7 @@ it's key-value to an sqlite database.
 
 # API
 
-```
+```python
 from keyvalue_sqlite import KeyValueSqlite
 
 DB_PATH = '/path/to/db.sqlite'
@@ -21,7 +21,7 @@ assert '1' == db.get('0')
 
 New in 1.0.4: atomic integers.
 
-```
+```python
 from keyvalue_sqlite import KeyValueSqlite
 
 DB_PATH = '/path/to/db.sqlite'
