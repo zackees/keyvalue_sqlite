@@ -5,6 +5,7 @@ it's key-value to an sqlite database.
 
 [![Win_Tests](https://github.com/zackees/keyvalue_sqlite/actions/workflows/push_win.yml/badge.svg)](https://github.com/zackees/keyvalue_sqlite/actions/workflows/push_win.yml)
 [![Ubuntu_Tests](https://github.com/zackees/keyvalue_sqlite/actions/workflows/push_ubuntu.yml/badge.svg)](https://github.com/zackees/keyvalue_sqlite/actions/workflows/push_ubuntu.yml)
+[![MacOS_Tests](https://github.com/zackees/keyvalue_sqlite/actions/workflows/push_macos.yml/badge.svg)](https://github.com/zackees/keyvalue_sqlite/actions/workflows/push_macos.yml)
 
 # API
 
