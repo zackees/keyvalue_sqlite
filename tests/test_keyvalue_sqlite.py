@@ -95,6 +95,21 @@ class KeyValueSqliteTester(unittest.TestCase):
             self.assertEqual("1", val)
         self.assertTrue(iterated)
 
+    def test_default_table_name(self):
+        """Test the default table name."""
+        db_path = self.create_tempfile_path()
+        db = KeyValueSqlite(db_path)
+        db.set("0", "1")
+        self.assertEqual("1", db.get("0"))
+        db.set("0", "2")
+        self.assertEqual("2", db.get("0"))
+        db["4"] = "5"
+        try:
+            v = db["BAD_KEY"]  # pylint: disable = unused-variable
+            self.fail()
+        except KeyError as kerr:
+            self.assertIn('Missing key: "BAD_KEY"', str(kerr))
+
     def test_set_null_key(self):
         """Test the set method with a null key."""
         db_path = self.create_tempfile_path()

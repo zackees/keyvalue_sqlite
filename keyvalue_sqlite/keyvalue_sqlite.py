@@ -50,7 +50,8 @@ class KeyValueSqlite:
         self, db_path: str, table_name: Optional[str] = None, timeout: int = TIMEOUT_OPEN
     ) -> None:
         """Initialize the database."""
-        table_name = table_name or "default"
+        if table_name is None:
+            table_name = "default_table"
         self.timeout = timeout
         self.db_path = to_path(db_path)
         folder_path = os.path.dirname(self.db_path)
