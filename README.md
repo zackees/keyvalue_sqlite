@@ -1,5 +1,7 @@
 # KeyValueSqlite
 
+`pip install key-value-db`
+
 Super easy drop in replacement for python dictionary, which stores
 it's key-value to an sqlite database.
 
