@@ -3,7 +3,7 @@
 `pip install key-value-db`
 
 Super easy drop in replacement for python dictionary, which stores
-it's key-value to an sqlite database.
+it's key-value to an sqlite database. Atomic counters are supported.
 
 [![Win_Tests](https://github.com/zackees/keyvalue_sqlite/actions/workflows/push_win.yml/badge.svg)](https://github.com/zackees/keyvalue_sqlite/actions/workflows/push_win.yml)
 [![Ubuntu_Tests](https://github.com/zackees/keyvalue_sqlite/actions/workflows/push_ubuntu.yml/badge.svg)](https://github.com/zackees/keyvalue_sqlite/actions/workflows/push_ubuntu.yml)
@@ -35,9 +35,11 @@ DB_PATH = '/path/to/db.sqlite'
 db = KeyValueSqlite(DB_PATH, 'table-name')
 # Now use standard dictionary operators
 db.set_default('atomic_var', '1')
-db.atomic_add('atomic_var', '2')
 val = db.get('atomic_var')
 assert '3' == actual_value
+
+# also atomic are supported:
+db.atomic_add('atomic_var', '2')
 ```
 
 This datastructure is not going to win any performance races, but it
