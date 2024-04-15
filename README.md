@@ -9,6 +9,10 @@ it's key-value to an sqlite database. Atomic counters are supported.
 [![Ubuntu_Tests](https://github.com/zackees/keyvalue_sqlite/actions/workflows/push_ubuntu.yml/badge.svg)](https://github.com/zackees/keyvalue_sqlite/actions/workflows/push_ubuntu.yml)
 [![MacOS_Tests](https://github.com/zackees/keyvalue_sqlite/actions/workflows/push_macos.yml/badge.svg)](https://github.com/zackees/keyvalue_sqlite/actions/workflows/push_macos.yml)
 
+This is great if you have a web app that needs to communicate with other workers or a backend service, but don't want to install Redis.
+
+Keep in mind this library does no connection recycling, so the per-query performance won't be good if the db gets past a certain size.
+
 # API
 
 ```python
