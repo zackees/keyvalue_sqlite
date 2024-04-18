@@ -49,9 +49,8 @@ db.atomic_add('atomic_var', '2')
 This datastructure is not going to win any performance races, but it
 is super simple to use with just a few lines of code. This is a great
 option for one of those small web apps which doesn't have enough load
-to justify mysql or postgres or redis, or a file that will be used by multiple
-processes, or to store a file that can't be corrupted during a power
-failure.
+to justify mysql or postgres or redis or you want to want something
+that is simple to use in Windows environment.
 
 When fetching large amounts of data try to use get_many() or dict_range().
 
